@@ -144,7 +144,7 @@ elif mode == "Prédiction depuis le tableau":
     modele_tab = st.selectbox(
         "Modèle", sorted(df[df['marque']==marque_tab]['modele'].unique())
     )
-    st.header("Le nombre de ce type")
+    st.header("Le nombre de ce Modele")
     df_filtre = df[(df['marque']==marque_tab)&(df['modele']==modele_tab)]
     st.dataframe(df_filtre)
     
@@ -222,4 +222,5 @@ elif mode == "Achat":
         if st.button("Annuler achat"):
             st.session_state['purchased'].remove(ann2)
             st.success(f" Achat de {ann2} annulé.")
+
 
