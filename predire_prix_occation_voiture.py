@@ -223,4 +223,11 @@ elif mode == "Achat":
             st.session_state['purchased'].remove(ann2)
             st.success(f" Achat de {ann2} annulé.")
 
+# Signature
+st.markdown("""
+<div class="footer">
+    Réalisé par <strong>SOULEYMANE DAFFE - DATA SCIENTIST</strong>
+</div>
+""", unsafe_allow_html=True)
+
 
