@@ -61,7 +61,7 @@ def charger_et_nettoyer(chemin_csv: str = "used_cars.csv") -> pd.DataFrame:
     return df[cols].dropna()
 
 # --- Préparation des données pour affichage ---
-# @st.cache_data
+@st.cache_data
 def preparer_affichage(df: pd.DataFrame) -> pd.DataFrame:
     df_aff = df.copy()
     # Traduction drapeaux
@@ -261,4 +261,5 @@ st.markdown("""
     Réalisé par <strong>SOULEYMANE DAFFE - DATA SCIENTIST</strong>
 </div>
 """, unsafe_allow_html=True)
+
 
