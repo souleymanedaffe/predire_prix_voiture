@@ -135,7 +135,7 @@ if mode == "Prédiction manuelle":
         X_in     = pd.DataFrame([inp])
         brut     = modele.predict(X_in)[0]
         net, taux = calcul_depreciation(brut, annee_sel, inp['accident'], inp['titre_propre'])
-        st.success(f"💰 Prix brut estimé : {brut:,.0f} $")
+        st.success(f"💰 Prix brut estimé : {brut:.0f} $")
 
 # === 2. PRÉDICTION DEPUIS LE TABLEAU ===
 elif mode == "Prédiction depuis le tableau":
@@ -175,7 +175,7 @@ elif mode == "Prédiction depuis le tableau":
         X_in     = pd.DataFrame([inp])
         brut     = modele.predict(X_in)[0]
         net, taux = calcul_depreciation(brut, veh['annee_modele'], inp['accident'], inp['titre_propre'])
-        st.success(f"💰 Prix brut estimé : {brut:,.0f} $")
+        st.success(f"💰 Prix brut estimé : {brut:.0f} $")
 
 # === 3. RÉSERVATION ===
 elif mode == "Réservation":
@@ -229,5 +229,6 @@ st.markdown("""
     Réalisé par <strong>SOULEYMANE DAFFE - DATA SCIENTIST</strong>
 </div>
 """, unsafe_allow_html=True)
+
 
 
