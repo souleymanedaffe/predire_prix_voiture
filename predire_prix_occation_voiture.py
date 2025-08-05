@@ -139,11 +139,12 @@ if mode == "Prédiction manuelle":
 
 # === 2. PRÉDICTION DEPUIS LE TABLEAU ===
 elif mode == "Prédiction depuis le tableau":
-    st.header("Prédiction depuis le jeu de données")
+    st.header("Prédicteur manuelle de prix d’une voiture d’occasion")
     marque_tab = st.selectbox("Marque", sorted(df['marque'].unique()))
     modele_tab = st.selectbox(
         "Modèle", sorted(df[df['marque']==marque_tab]['modele'].unique())
     )
+    st.header("Le nombre de ce type")
     df_filtre = df[(df['marque']==marque_tab)&(df['modele']==modele_tab)]
     st.dataframe(df_filtre)
     
@@ -221,3 +222,4 @@ elif mode == "Achat":
         if st.button("Annuler achat"):
             st.session_state['purchased'].remove(ann2)
             st.success(f" Achat de {ann2} annulé.")
+
