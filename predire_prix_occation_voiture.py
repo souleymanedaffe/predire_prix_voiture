@@ -10,6 +10,19 @@ from datetime import datetime
 # --- Configuration de la page ---
 st.set_page_config(page_title="Prédicteur & Gestion de Véhicules", layout="wide")
 
+# --- Styles personnalisés (boutons larges) ---
+st.markdown(
+    """
+    <style>
+    div.stButton > button {
+        width: 100%;
+        height: 3em;
+        font-size: 16px;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
 # --- Constantes de dépréciation dynamique ---
 TAUX_BASE_ANNUEL      = 0.01   # 1% par année
 PENALITE_PAR_ACCIDENT = 0.003  # 0,3% par accident
@@ -67,10 +80,6 @@ def calcul_depreciation(prix_initial: float,
                         annee_modele:   int,
                         accidents:      int,
                         titre_propre:   int) -> tuple[float, float]:
-    """
-    Retourne (prix_après, taux_annuel_effectif)
-    taux_effectif = 1%*âge + 0,3%*accidents + 0,3%*titre_non_propre
-    """
     age = max(datetime.now().year - annee_modele, 0)
     taux = (TAUX_BASE_ANNUEL * age
             + PENALITE_PAR_ACCIDENT * accidents
@@ -78,7 +87,7 @@ def calcul_depreciation(prix_initial: float,
     prix_net = prix_initial * ((1 - taux) ** age)
     return prix_net, taux
 
-# --- Initialisation de l'état des réservations et achats ---
+# --- Initialisation de l'état ---
 if 'reserved' not in st.session_state:
     st.session_state['reserved'] = []
 if 'purchased' not in st.session_state:
@@ -99,7 +108,6 @@ mode = st.sidebar.radio("Mode", [
 # === 1. PRÉDICTION MANUELLE ===
 if mode == "Prédiction manuelle":
     st.header("Prédiction manuelle de prix d’une voiture d’occasion")
-    # Sélections utilisateur
     marque_sel       = st.selectbox("Marque", sorted(df['marque'].unique()))
     annee_sel        = st.slider("Année du modèle", 1990, datetime.now().year, 2018)
     km_sel           = st.selectbox("Kilométrage (km)", list(range(0,300001,2000)), index=25)
@@ -109,7 +117,6 @@ if mode == "Prédiction manuelle":
     titre_sel        = st.radio("Titre propre ?", ['Non', 'Oui'])
     
     if st.button("Prédire"):
-        # Construction du vecteur de features
         inp = {
             'annee_modele': annee_sel,
             'kilometrage':  km_sel,
@@ -127,12 +134,8 @@ if mode == "Prédiction manuelle":
                 inp.setdefault(col, 0)
         X_in     = pd.DataFrame([inp])
         brut     = modele.predict(X_in)[0]
-        age      = datetime.now().year - annee_sel
         net, taux = calcul_depreciation(brut, annee_sel, inp['accident'], inp['titre_propre'])
-        
         st.success(f"💰 Prix brut estimé : {brut:,.0f} $")
-       #st.info   (f"📆 Âge du véhicule : {age} ans")
-        #st.success(f"Prix après dépréciation ({taux*100:.1f}%/an sur {age} ans) : {net:,.0f} $")
 
 # === 2. PRÉDICTION DEPUIS LE TABLEAU ===
 elif mode == "Prédiction depuis le tableau":
@@ -144,8 +147,15 @@ elif mode == "Prédiction depuis le tableau":
     df_filtre = df[(df['marque']==marque_tab)&(df['modele']==modele_tab)]
     st.dataframe(df_filtre)
     
+    # Sélection de l'index dans le sous-ensemble
+    choix_idx = st.selectbox("Sélectionnez l'index du véhicule", df_filtre.index.tolist())
+    if choix_idx is not None:
+        st.subheader("Détails du véhicule sélectionné")
+        st.dataframe(df_filtre.loc[[choix_idx]])
+    
+    # Bouton de prédiction élargi
     if st.button("Prédire ce véhicule"):
-        veh = df_filtre.iloc[0]
+        veh = df_filtre.loc[choix_idx]
         inp = {
             'annee_modele': int(veh['annee_modele']),
             'kilometrage':  float(veh['kilometrage']),
@@ -163,20 +173,14 @@ elif mode == "Prédiction depuis le tableau":
                 inp.setdefault(col, 0)
         X_in     = pd.DataFrame([inp])
         brut     = modele.predict(X_in)[0]
-        age      = datetime.now().year - veh['annee_modele']
-        net, taux = calcul_depreciation(brut, veh['annee_modele'],
-                                        inp['accident'], inp['titre_propre'])
-        
+        net, taux = calcul_depreciation(brut, veh['annee_modele'], inp['accident'], inp['titre_propre'])
         st.success(f"💰 Prix brut estimé : {brut:,.0f} $")
-        #st.info   (f"📆 Âge du véhicule : {age} ans")
-       # st.success(f"Prix après dépréciation ({taux*100:.1f}%/an sur {age} ans) : {net:,.0f} $")
 
 # === 3. RÉSERVATION ===
 elif mode == "Réservation":
     st.header("Réservation de voiture")
-    st.dataframe(df)  # Affiche tout pour choisir l'index
+    st.dataframe(df)
     choix = st.selectbox("Index à réserver", df.index.tolist(), key='reserve_sel')
-    
     if st.button("Réserver"):
         if choix in st.session_state['reserved']:
             st.warning("❗ Cette voiture est déjà réservée.")
@@ -184,7 +188,7 @@ elif mode == "Réservation":
             st.warning("❗ Cette voiture a déjà été achetée.")
         else:
             st.session_state['reserved'].append(choix)
-            st.success(f" Voiture {choix} réservée.")
+            st.success(f"Voiture {choix} réservée.")
     
     if st.session_state['reserved']:
         st.subheader("Mes réservations")
@@ -193,23 +197,21 @@ elif mode == "Réservation":
         ann = st.selectbox("Annuler réservation de", st.session_state['reserved'], key='ann_res')
         if st.button("Annuler réservation"):
             st.session_state['reserved'].remove(ann)
-            st.success(f"🗑️ Réservation de #{ann} annulée.")
+            st.success(f" Réservation de {ann} annulée.")
 
 # === 4. ACHAT ===
 elif mode == "Achat":
     st.header("Achat de voiture")
     st.dataframe(df)
     choix2 = st.selectbox("Index à acheter", df.index.tolist(), key='achat_sel')
-    
     if st.button("Acheter"):
         if choix2 in st.session_state['purchased']:
             st.warning("❗ Cette voiture est déjà achetée.")
         else:
-            # si elle était réservée, on libère la réservation
             if choix2 in st.session_state['reserved']:
                 st.session_state['reserved'].remove(choix2)
             st.session_state['purchased'].append(choix2)
-            st.success(f" Voiture {choix2} achetée.")
+            st.success(f"Voiture {choix2} achetée.")
     
     if st.session_state['purchased']:
         st.subheader("Mes achats")
@@ -218,4 +220,4 @@ elif mode == "Achat":
         ann2 = st.selectbox("Annuler achat de", st.session_state['purchased'], key='ann_ach')
         if st.button("Annuler achat"):
             st.session_state['purchased'].remove(ann2)
-            st.success(f"🗑️ Achat de #{ann2} annulé.")
+            st.success(f" Achat de {ann2} annulé.")
